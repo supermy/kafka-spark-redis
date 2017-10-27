@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="Maven 1" modules="kafka-sparkstreaming-sparksql-redis">
+      <option name="deprecationWarnings" value="true" />
+    </profile>
+    <profile name="Maven 2" modules="kafka-spark-redis" />
+  </component>
+</project>
