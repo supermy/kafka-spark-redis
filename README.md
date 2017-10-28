@@ -1,6 +1,6 @@
 # mybigdata
 
-[![Build Status](https://travis-ci.org/supermy/rocksdb-service.svg?branch=master)](https://github.com/supermy/rocksdb-service)
+[![Build Status](https://travis-ci.org/supermy/kafka-spark-redis.svg?branch=master)](https://github.com/supermy/kafka-spark-redis)
 
 ## 简介 
 *  大数据实时流的计算框架，kafka+spark+redis
@@ -31,7 +31,10 @@
 
 
 ## 快速试用
-  需要 jdk8环境。
+    1.  需要 jdk8环境；
+    2.  配置 kafka 环境；
+    3.  运行示例1
+    4.  运行示例2
 
 
 
@@ -124,12 +127,62 @@ Topic的分区和复制
 ```
 ## 使用
 
-```aidl
+### 示例1：生产数据，KafkaWordCountProducer 消费数据，KafkaWordCount
 
-编辑configuration,
-    (1)KafkaWordCountProducer
-    选择KafkaWordCount.scala中的KafkaWordCountProducer方法
-    VM options 设置为:-Dspark.master=local
-    设置程序输入参数,Program arguments: localhost:9092 test 3 5
-    
+```aidl
+        spark-streaming-kafka 包：支持向 kafka 传送数据
+            //topic 与 随机数 构造消息
+            val message = new ProducerRecord[String, String](topic, null, str)
+            //发送消息到 kafka
+            producer.send(message)
+        
+        
+
+        运行时编辑configuration,
+        (1)KafkaWordCountProducer
+        选择KafkaWordCount.scala中的KafkaWordCountProducer方法
+        VM options 设置为:-Dspark.master=local
+        设置程序输入参数,Program arguments: localhost:9092 test 3 5
+        
+```
+
+```aidl
+        从 zookeeper 获取地址消费数据，此方式已被废弃
+        val lines = KafkaUtils.createStream(ssc, zkQuorum, group, topicpMap).map(_._2) //创建流并且获取数据
+
+```
+
+### 示例2：生产数据，KafkaEventProducer$ 消费数据，UserClickCountAnalytics$
+```aidl
+    生产数据
+          val producer = new Producer[String, String](kafkaConfig)
+          producer.send(new KeyedMessage[String, String](topic, event.toString))
+
+    消费数据，目前采用的方式快速且好用资源较少
+          val kafkaStream = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topics)
+
+```
+
+### 示例3：打包提交版本到生产环境
+
+```aidl
+    1. source /etc/profile  
+    2.   
+    3. grapher=`ps -ef | grep spark |grep SparkStreaming.jar | awk '{print $2}'`  
+    4. echo $grapher  
+    5.   
+    6. kill -9 $grapher  
+    7.   
+    8. nohup /opt/modules/spark/bin/spark-submit \  
+    9. --master spark://127.0.0.1:7077 \  
+    10. --driver-memory 3g \  
+    11. --executor-memory 3g \  
+    12. --total-executor-cores 24 \  
+    13. --conf spark.ui.port=56689  \  
+    14. --jars /opt/bin/sparkJars/kafka_2.10-0.8.2.1.jar,/opt/bin/sparkJars/spark-streaming-kafka_2.10-1.4.1.jar,/opt/bin/sparkJars/metrics-core-2.2.0.jar,/opt/bin/sparkJars/mysql-connector-java-5.1.26-bin.jar,/opt/bin/sparkJars/spark-streaming-  
+    15. kafka_2.10-1.4.1.jar \  
+    16. --class com.hexun.streaming.StockCntSumKafkaLPcnt \  
+    17. /opt/bin/UDF/SparkStreaming.jar \  
+    18.  >/opt/bin/initservice/stock.log 2>&1 & \ 
+
 ```
